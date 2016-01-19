@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/halo" width="100%" height="100%" 
+			   backgroundColor="#E4E4E4" creationComplete="init()">
+	<fx:Script>
+		<![CDATA[ 
+		
+			
+			import flash.net.FileReference;
+			import flash.utils.ByteArray;
+			import mx.controls.Alert;
+			private var file:FileReference = new FileReference();		//加密文件
+			private var file2:FileReference = new FileReference();		//解密文件
+			private var fileByteArray:ByteArray ; 
+			private var saveSwf:String;							//保存文件名称
+			
+			//初始化
+			private function init():void{
+				file.addEventListener(Event.SELECT , function (e:Event):void{
+					file.load();
+				});
+				file.addEventListener(Event.COMPLETE , fileComplete);
+				file2.addEventListener(Event.SELECT , function (e:Event):void{
+					file2.load();
+				});
+				file2.addEventListener(Event.COMPLETE , file2Complete);
+			}
+			//点击加密
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				if(password.text.length <= 0){
+					error.text = "请输入密文";
+					return;
+				}else{
+					error.text = "";
+				}
+				var filter:FileFilter = new FileFilter("*.swf","*.swf");
+				file.browse([filter]);
+			}
+			//点击解密
+			protected function button2_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				if(password.text.length <= 0){
+					error.text = "请输入密文";
+					return;
+				}else{
+					error.text = "";
+				}
+				var filter:FileFilter = new FileFilter("*.swf","*.swf");
+				file2.browse([filter]);
+			}
+			//加密加载完成
+			protected function fileComplete(e:Event):void{
+				saveSwf = file.name;
+				compress(file.data);				
+			}
+			//解密加载完成
+			protected function file2Complete(e:Event):void{
+				//trace(file2.name , file2.data.length);
+				saveSwf = file2.name;
+				uncompress(file2.data);				
+			}
+			
+			//加密函数
+			private function compress(byte:ByteArray):ByteArray{
+				var key:String = password.text;		//得到密文
+				var flag:int = 0;
+				
+				var newByte:ByteArray = new ByteArray();
+				/* */
+				for(var i:int = 0; i<byte.length ; i++ ,flag++){	
+					if(flag >= key.length){
+						flag = 0;
+					}
+				
+					var str:String='';
+					var len:int=0;
+//					cp(byte[i]+ key.charCodeAt(flag),str,len);
+//					var arr:Array=[];
+//					arr.push({x8:str,len8:len});
+					newByte.writeByte(byte[i] + key.charCodeAt(flag));
+					//newByte.writeByte(byte[i] + 256);
+				} 
+				
+				
+				//输出
+//				newByte.compress(CompressionAlgorithm.DEFLATE);
+				fileByteArray = newByte;
+				saveBtn.visible = true;
+				return newByte;
+			}
+			
+			private function cp(n:int,str:String,len:int):void{
+				var t1:int=(n/16);
+				var t2:int=n%16;
+				trace("byte:"+t2);
+				++len;
+				str+=t2.toString();
+				if(t1>16){
+					cp(t1,str,len);
+				}
+				
+			}
+			
+			
+			//解密函数
+			private function uncompress(byte:ByteArray):ByteArray{
+				var key:String = password.text;		//得到密文
+				var flag:int = 0;
+				
+				var newByte:ByteArray = new ByteArray();
+				/* */
+				for(var i:int = 0; i<byte.length ; i++ ,flag++){	
+					if(flag >= key.length){
+						flag = 0;
+					}
+					
+					newByte.writeByte(byte[i] - key.charCodeAt(flag));
+					//newByte.writeByte(byte[i] + 256);
+				} 				
+				//trace(newByte);
+//				fileByteArray.objectEncoding=ObjectEncoding.AMF3;
+				fileByteArray = newByte;
+				saveBtn.visible = true;
+				return newByte;
+			}
+			
+			protected function saveBtn_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				var saveFile:FileReference = new FileReference();
+				saveFile.save(fileByteArray , saveSwf);			
+			}
+			
+			
+	
+		
+			
+		]]> 
+	</fx:Script>
+	<fx:Declarations>
+		<!--  Place non-visual elements (e.g., services, value objects) here 
+		--> 
+	</fx:Declarations>
+	<s:Button x="10" y="10" label="加密swf" click="button1_clickHandler(event)" /> 
+	<s:Button x="88" y="10" label="解密swf" click="button2_clickHandler(event)" /> 
+	<s:Label x="10" y="50" text="密文：" /> 
+	<s:TextInput id="password" x="54" y="45" text="adfafsdfafa中国人"/> 
+	<s:Button id="saveBtn" x="10" y="90" label="保存swf" visible="false" click="saveBtn_clickHandler(event)" /> 
+	<s:Label id="error" x="10" y="70" width="250" color="#FF0000" /> 
+	
+
+	
+</s:Application>
